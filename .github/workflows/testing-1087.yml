@@ -20,11 +20,6 @@ jobs:
           cat /etc/os-release
           echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
           
-      - name: Clear cached Python 3.8
-        run: |
-          if [ -d "$RUNNER_TOOL_CACHE/Python" ]; then
-            find "$RUNNER_TOOL_CACHE/Python" -maxdepth 1 -mindepth 1 -type d -name "3.8*" -print -exec rm -rf {} \;
-          fi
           
       - name: Setup Python
         uses: v-gowridurgad/setup-python@feature-1087

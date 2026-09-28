@@ -1,32 +1,41 @@
-name: Repro setup-python OS-incompatible cache reuse
+name: Testing-1087
 
 on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-24-first:
+  rhel10-first:
     runs-on: self-hosted
     container:
-      image: ubuntu:24.04
+      image: redhat/ubi10
+      # Mount the host's tool cache into the container so both jobs share it.
+      options: --volume /opt/hostedtoolcache:/opt/hostedtoolcache
+    env:
+      RUNNER_TOOL_CACHE: /opt/hostedtoolcache
+      AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
     steps:
       - name: Install tools
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            bash curl ca-certificates git jq tar xz-utils file
-            
+          dnf -y --allowerasing install bash ca-certificates git jq tar xz file findutils
       - name: OS info
         run: |
           cat /etc/os-release
+          echo "RUNNER_ENVIRONMENT='${RUNNER_ENVIRONMENT}'"
           echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
-          
-          
+          echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY"
+          uname -a
       - name: Setup Python
-        uses: v-gowridurgad/setup-python@feature-1087
+        # uses: actions/setup-python@v6
+        uses: gowridurgad/setup-python@arch-suffix-v2
         with:
-          python-version: '3.8'
-          scope-cache-by-os: true
+          python-version: '3.14'
 
+      - name: Post-setup env
+        run: |
+          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+          echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY"
+          echo "pythonLocation=$pythonLocation"
+          find /opt/hostedtoolcache -maxdepth 4 -type d 2>/dev/null | head -50
       - name: Inspect Python
         run: |
           echo "pythonLocation=$pythonLocation"
@@ -39,28 +48,38 @@ jobs:
       - name: Warm cache
         run: python -m pip install --upgrade pip
 
-  ubuntu-20-second:
-    needs: ubuntu-24-first
+  rhel9-second:
+    needs: rhel10-first
     runs-on: self-hosted
     container:
-      image: ubuntu:20.04
+      image: redhat/ubi9
+      options: --volume /opt/hostedtoolcache:/opt/hostedtoolcache
+    env:
+      RUNNER_TOOL_CACHE: /opt/hostedtoolcache
+      AGENT_TOOLSDIRECTORY: /opt/hostedtoolcache
     steps:
       - name: Install tools
         run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            bash curl ca-certificates git jq tar xz-utils file
+         dnf -y --allowerasing install bash ca-certificates git jq tar xz file findutils
       - name: OS info
         run: |
           cat /etc/os-release
+          echo "RUNNER_ENVIRONMENT='${RUNNER_ENVIRONMENT}'"
           echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
-          
+          echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY"
+          uname -a
       - name: Setup Python
-        uses: v-gowridurgad/setup-python@feature-1087
+        # uses: actions/setup-python@v6
+        uses: gowridurgad/setup-python@arch-suffix-v2
         with:
-          python-version: '3.8'
-          scope-cache-by-os: true
+          python-version: '3.14'
 
+      - name: Post-setup env
+        run: |
+          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+          echo "AGENT_TOOLSDIRECTORY=$AGENT_TOOLSDIRECTORY"
+          echo "pythonLocation=$pythonLocation"
+          find /opt/hostedtoolcache -maxdepth 4 -type d 2>/dev/null | head -50
       - name: Inspect Python
         run: |
           echo "pythonLocation=$pythonLocation"

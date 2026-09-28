@@ -4,39 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ubuntu-20-first:
-    runs-on: self-hosted
-    container:
-      image: ubuntu:20.04
-    steps:
-      - name: Install tools
-        run: |
-          apt-get update
-          DEBIAN_FRONTEND=noninteractive apt-get install -y \
-            bash curl ca-certificates git jq tar xz-utils file
-      - name: OS info
-        run: |
-          cat /etc/os-release
-          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
-      - name: Setup Python
-        uses: v-gowridurgad/setup-python@feature-1087
-        with:
-          python-version: '3.8'
-
-      - name: Inspect Python
-        run: |
-          echo "pythonLocation=$pythonLocation"
-          which python || true
-          python --version || true
-          python -m pip --version || true
-          python -c "import sys; print(sys.executable)" || true
-          python -c "import ssl; print(ssl.OPENSSL_VERSION)" || true
-          ldd "$(which python)" || true
-      - name: Warm cache
-        run: python -m pip install --upgrade pip
-
-  ubuntu-24-second:
-    needs: ubuntu-20-first
+  ubuntu-24-first:
     runs-on: self-hosted
     container:
       image: ubuntu:24.04
@@ -50,10 +18,50 @@ jobs:
         run: |
           cat /etc/os-release
           echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+      - name: Clear cached Python 3.8
+        run: |
+          if [ -d "$RUNNER_TOOL_CACHE/Python" ]; then
+            find "$RUNNER_TOOL_CACHE/Python" -maxdepth 1 -mindepth 1 -type d -name "3.8*" -print -exec rm -rf {} \;
+          fi
       - name: Setup Python
         uses: v-gowridurgad/setup-python@feature-1087
         with:
           python-version: '3.8'
+          # scope-cache-by-os: true
+
+      - name: Inspect Python
+        run: |
+          echo "pythonLocation=$pythonLocation"
+          which python || true
+          python --version || true
+          python -m pip --version || true
+          python -c "import sys; print(sys.executable)" || true
+          python -c "import ssl; print(ssl.OPENSSL_VERSION)" || true
+          ldd "$(which python)" || true
+      - name: Warm cache
+        run: python -m pip install --upgrade pip
+
+  ubuntu-20-second:
+    needs: ubuntu-24-first
+    runs-on: self-hosted
+    container:
+      image: ubuntu:20.04
+    steps:
+      - name: Install tools
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            bash curl ca-certificates git jq tar xz-utils file
+      - name: OS info
+        run: |
+          cat /etc/os-release
+          echo "RUNNER_TOOL_CACHE=$RUNNER_TOOL_CACHE"
+          
+      - name: Setup Python
+        uses: v-gowridurgad/setup-python@feature-1087
+        with:
+          python-version: '3.8'
+          # scope-cache-by-os: true
 
       - name: Inspect Python
         run: |

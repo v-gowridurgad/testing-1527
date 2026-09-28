@@ -1,4 +1,4 @@
-name: Testing-1087
+name: Repro setup-python OS-incompatible cache reuse (RHEL)
 
 on:
   workflow_dispatch:
@@ -29,6 +29,7 @@ jobs:
         uses:  v-gowridurgad/setup-python@feature-1087
         with:
           python-version: '3.14'
+          scope-cache-by-os: true
 
       - name: Post-setup env
         run: |
@@ -73,6 +74,7 @@ jobs:
         uses:  v-gowridurgad/setup-python@feature-1087
         with:
           python-version: '3.14'
+          scope-cache-by-os: true
 
       - name: Post-setup env
         run: |
